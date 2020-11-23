@@ -53,6 +53,7 @@ int main(int argc,  char* argv[])
 		}
 	}
 
+	
 	RunTask runTask(runTaskIniPath, appName, svrId, threadNum, xmlPath);
 	
 	runTask.run();

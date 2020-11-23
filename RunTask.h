@@ -9,8 +9,7 @@
 #include "sstream"
 #include "regex"
 #include "vector"
-#include "stdio.h"
-#include "stdlib.h"
+#include "boost/thread.hpp"
 struct BasicTask
 {
 	std::string tskFile;
@@ -30,7 +29,7 @@ class PrjInfo
 {
 public:
 	PrjInfo() {};
-	~PrjInfo() { _dealStage.clear(); };
+	virtual ~PrjInfo() { _dealStage.clear(); };
 	explicit PrjInfo(std::string taskIniPath, std::string appName);
 
 	int GetGrpNum() {return _grpNum;}
@@ -58,7 +57,7 @@ public:
 	RunTask() {};
 	explicit RunTask(std::string taskIniPath, std::string appName, int svrId, int threadNum, std::string xmlPath):
 		PrjInfo(taskIniPath, appName), _svrId(svrId), _threadNum(threadNum), _xmlPath(xmlPath) {}
-	~RunTask() {};
+	~RunTask() { _dealDetail.clear(); };
 	bool run();
 	
 protected:

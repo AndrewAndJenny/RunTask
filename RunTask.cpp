@@ -1,6 +1,9 @@
 #include "RunTask.h"
+#include "io.h"
+#include"time.h"
+#include "windows.h"
+#include <tchar.h>
 const std::vector<std::string> PrjInfo::s_appList = { "FILTER","REGIST", "CLASSIFY","BDSEG","MESHRECON","POISSONRECON","TEXTURING","StockerLoDs","PlaneSeg","LODTEXTURE","VisCheck" };
-
 
 int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 {
@@ -170,18 +173,24 @@ bool RunTask::run()
 			if (strcmp(".bat", _ext) == 0)
 				cmdTskExe = grpTskExePath;
 			else
+			{
+				if (_access(_xmlPath.c_str(), 0) != 0)
+				{
+					std::cerr << "couldn't find xml!";
+					exit(1);
+				}
 				cmdTskExe = grpTskExePath + " " + _xmlPath;
-			system(cmdTskExe.c_str());
-		}
+			}
+				
+			system(cmdTskExe.c_str());//build the content of tskfile
 
+			if(grpTskFilePath.empty())//just run TskExe xml, current loop is over
+				continue;
+		}
+		//if dont have TskExe,there must have a .gtsk,so we read the content of gtsk.
 		MediumTask tmp;
 		std::string line;
 
-		if (grpTskFilePath.empty())
-		{
-			std::cerr << "Couldn't find .tsk file!";
-			exit(1);
-		}
 		std::fstream fpRead(grpTskFilePath);
 		if (!fpRead)
 		{
@@ -197,21 +206,49 @@ bool RunTask::run()
 			std::getline(fpRead, line);
 			tmp.callInfo.push_back(line);
 		}
-		_dealDetail.insert(std::pair<int, MediumTask>(i, tmp));
-			
-	}
-	
-	//use thread to deal with detail tasks
-	for (int i = 0; i < _dealDetail.size(); i++)
-	{
-		if(_dealDetail[i].tskNum==0)
+		_dealDetail.insert(std::pair<int, MediumTask>(i, tmp));//Store every loop information
+
+		fpRead.close();
+		
+		if (_dealDetail[i].tskNum == 0)
 			continue;
 
-		for (int j = 0; j < _dealDetail[i].tskNum; j++)
-		{
-			std::string cmdSinTsk = _dealDetail[i].callInfo[j];
-			system(cmdSinTsk.c_str());
+		//use thread to deal with detail tasks
+		int maxThreadNum = boost::thread::hardware_concurrency();
+		int totalTskNum = _dealDetail[i].tskNum;
+
+		if (_threadNum<1 || _threadNum>maxThreadNum) {
+			std::cerr << "ERROR! The number of thread must meet the requirements\n";
+			exit(1);
 		}
+		clock_t start_time = clock();
+		for (int j = 0; j < totalTskNum; j+= _threadNum)
+		{
+			int remainThreadNum = totalTskNum - j >= _threadNum ? _threadNum : totalTskNum - j;
+
+			for (int k = 0; k < remainThreadNum; k++)
+			{
+				LPSTR cmdLine = (LPSTR)_dealDetail[i].callInfo[j + k].c_str();
+				STARTUPINFOA startUpInfo = { 0 };
+				PROCESS_INFORMATION processInformation = { 0 };
+				startUpInfo.cb = sizeof(STARTUPINFOA);
+				//CREATE_NO_WINDOW or CREATE_NEW_CONSOLE
+				 bool flag = CreateProcess(NULL,cmdLine,NULL,NULL,FALSE, CREATE_NO_WINDOW,NULL,NULL,&startUpInfo, &processInformation);
+				 
+				 if (flag)
+					 std::cout << "Finish the number of " << j + k << " task\n";
+				 else
+					 std::cout << "Unfinish the number of " << j + k << " task\n";
+			}
+		}
+		clock_t end_time = clock();
+		std::cout << "The run time is: " << (double)(end_time - start_time)<< "ms" << std::endl;
 	}
+
+	std::string cmdChkExe = GetChkExe();
+
+	if (!cmdChkExe.empty())
+		system(cmdChkExe.c_str());
+
 	return true;
 }
