@@ -1,8 +1,14 @@
 #include "RunTask.h"
-#include "io.h"
-#include"time.h"
+//#include"time.h"
+#ifdef  _WIN32
 #include "windows.h"
-#include <tchar.h>
+#include "io.h"
+#else defined linux
+#include "sys/io.h"
+#include "stdlib.h"
+#endif
+
+
 const std::vector<std::string> PrjInfo::s_appList = { "FILTER","REGIST", "CLASSIFY","BDSEG","MESHRECON","POISSONRECON","TEXTURING","StockerLoDs","PlaneSeg","LODTEXTURE","VisCheck" };
 
 int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
@@ -221,11 +227,13 @@ bool RunTask::run()
 			std::cerr << "ERROR! The number of thread must meet the requirements\n";
 			exit(1);
 		}
-		clock_t start_time = clock();
+
+		//clock_t start_time = clock();
+
 		for (int j = 0; j < totalTskNum; j+= _threadNum)
 		{
 			int remainThreadNum = totalTskNum - j >= _threadNum ? _threadNum : totalTskNum - j;
-
+#ifdef  _WIN32
 			for (int k = 0; k < remainThreadNum; k++)
 			{
 				LPSTR cmdLine = (LPSTR)_dealDetail[i].callInfo[j + k].c_str();
@@ -240,9 +248,12 @@ bool RunTask::run()
 				 else
 					 std::cout << "Unfinish the number of " << j + k << " task\n";
 			}
+#else defined linux
+
+#endif
 		}
-		clock_t end_time = clock();
-		std::cout << "The run time is: " << (double)(end_time - start_time)<< "ms" << std::endl;
+		//clock_t end_time = clock();
+		//std::cout << "The run time is: " << (double)(end_time - start_time)<< "ms" << std::endl;
 	}
 
 	std::string cmdChkExe = GetChkExe();
