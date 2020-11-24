@@ -58,7 +58,8 @@ public:
 	explicit RunTask(std::string taskIniPath, std::string appName, int svrId, int threadNum, std::string xmlPath):
 		PrjInfo(taskIniPath, appName), _svrId(svrId), _threadNum(threadNum), _xmlPath(xmlPath) {}
 	~RunTask() { _dealDetail.clear(); };
-	bool run();
+
+    bool run();
 	
 protected:
 

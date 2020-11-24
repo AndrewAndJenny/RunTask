@@ -4,8 +4,11 @@
 #include "windows.h"
 #include "io.h"
 #else defined linux
-#include "sys/io.h"
 #include "stdlib.h"
+#include"unistd.h"
+#include <sys/wait.h>
+#include <errno.h>
+#include"boost/algorithm/string.hpp"
 #endif
 
 
@@ -180,14 +183,22 @@ bool RunTask::run()
 				cmdTskExe = grpTskExePath;
 			else
 			{
+#ifdef  _WIN32
 				if (_access(_xmlPath.c_str(), 0) != 0)
 				{
 					std::cerr << "couldn't find xml!";
 					exit(1);
 				}
+#else defiend Linux
+                if (access(_xmlPath.c_str(), 0) != 0)
+                {
+                    std::cerr << "couldn't find xml!";
+                    exit(1);
+                }
+#endif
 				cmdTskExe = grpTskExePath + " " + _xmlPath;
 			}
-				
+
 			system(cmdTskExe.c_str());//build the content of tskfile
 
 			if(grpTskFilePath.empty())//just run TskExe xml, current loop is over
@@ -249,7 +260,52 @@ bool RunTask::run()
 					 std::cout << "Unfinish the number of " << j + k << " task\n";
 			}
 #else defined linux
+            std::vector<pid_t> pidContainer;
+			std::vector<bool> pidBoolContainer;
+			bool oneThreadRun = true;
+            for (int k = 0; k < remainThreadNum; k++)
+            {
+                pid_t pid = fork();
 
+                if(pid==0){
+                    char* argument[50];
+                    std::string cmdLine =_dealDetail[i].callInfo[j + k];
+                    std::vector<std::string> commandSplit;
+                    boost::split(commandSplit,cmdLine,boost::is_any_of(" "), boost::token_compress_on);
+
+                    for(int pCommandSplit=0;pCommandSplit<commandSplit.size();pCommandSplit++)
+                        argument[pCommandSplit] = const_cast<char*>(commandSplit[pCommandSplit].c_str());
+                    argument[commandSplit.size()] = NULL;
+
+                    execv(argument[0],argument);
+                    //if execv correctly run,it will not go to here, if not, this will display the error of this process
+                    printf("command ls is not found, error code: %d(%s)", errno, strerror(errno));
+                }
+                else if(pid<0) {
+                    std::cerr<<"couldn't create new process!";
+                    exit(1);
+                }
+                else {//Parent thread
+                    pidContainer.push_back(pid);
+                    pidBoolContainer.push_back(true);
+                    waitpid(-1,NULL, WNOHANG);
+                }
+            }
+
+            do {//Rotation
+                for (int k = 0; k < pidContainer.size(); k++)
+                {
+                    int pidCurrent = waitpid(pidContainer[k],NULL,WNOHANG);
+                    if(pidCurrent == pidContainer[k])
+                        pidBoolContainer[k] = false;
+                }
+                oneThreadRun = false;
+                for (int k = 0; k < pidContainer.size(); k++) //Rotation
+                {
+                    if(pidBoolContainer[k])
+                        oneThreadRun = true;
+                }
+            }while(oneThreadRun);
 #endif
 		}
 		//clock_t end_time = clock();

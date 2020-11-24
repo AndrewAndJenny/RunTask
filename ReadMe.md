@@ -7,7 +7,7 @@ A tool to call another programs
 The code is based on the following prerequisites:
 
 - boost(Windows)<kbd>finished</kbd>
-- boost(Linux) <kbd>unfinished</kbd>
+- boost(Linux) <kbd>finished</kbd>
 
 ## Compilation
 

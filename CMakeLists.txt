@@ -28,7 +28,7 @@ if(MSVC)
     	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     	string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG " /NODEFAULTLIB:LIBCMT /NODEFAULTLIB:MSVCRT")
 else()
-	add_compile_options(-Wall -Wno-strict-aliasing)
+	add_compile_options(-w -Wno-strict-aliasing)
 endif()
 
 # set MD to MT
@@ -61,4 +61,4 @@ set(SRCS_FILES ${SOURCES})
 
 add_executable (${PROJECT_NAME} ${SRCS_FILES})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} -lboost_thread -lboost_system -lboost_filesystem)
