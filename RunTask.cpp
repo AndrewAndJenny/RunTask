@@ -38,7 +38,7 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 		std::cerr << "No such processing stage!";
 		exit(1);
 	}
-
+    //read RunTask.ini
 	std::fstream fpRead(taskIniPath);
 	if (!fpRead)
 	{
@@ -57,45 +57,44 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 		_state = std::atoi(result.suffix().str().c_str());
 
 	std::string t_appName = "[" + appName + "]";
-
+    //matching app
 	while (!fpRead.eof())
 	{
 		BasicTask tmp;
 
 		std::getline(fpRead, line);
 
-		if (strcmp(line.c_str(), t_appName.c_str()) == 0)
-		{
-			std::getline(fpRead, line);
-			if (std::regex_search(line, result, r))
-				_grpNum = std::atoi(result.suffix().str().c_str());
-			for (int i = 0; i < _grpNum; i++)
-			{
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.tskFile = result.suffix().str();
-				else
-					tmp.tskFile = "";
+		if (strcmp(line.c_str(), t_appName.c_str()) == 0) {
+            std::getline(fpRead, line);
+            if (std::regex_search(line, result, r))
+                _grpNum = std::atoi(result.suffix().str().c_str());
+            for (int i = 0; i < _grpNum; i++) {
+                std::getline(fpRead, line);
+                if (std::regex_search(line, result, r))
+                    tmp.tskFile = result.suffix().str();
+                else
+                    tmp.tskFile = "";
 
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.tskExe = result.suffix().str();
-				else
-					tmp.tskExe = "";
+                std::getline(fpRead, line);
+                if (std::regex_search(line, result, r))
+                    tmp.tskExe = result.suffix().str();
+                else
+                    tmp.tskExe = "";
 
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.knlExe = result.suffix().str();
-				else
-					tmp.knlExe = "";
-				_dealStage.insert(std::pair<int, BasicTask>(i, tmp));
-			}
-			std::getline(fpRead, line);
-			if (std::regex_search(line, result, r))
-				_chkExe = result.suffix().str();
-			else
-				_chkExe = "";
-		}
+                std::getline(fpRead, line);
+                if (std::regex_search(line, result, r))
+                    tmp.knlExe = result.suffix().str();
+                else
+                    tmp.knlExe = "";
+                _dealStage.insert(std::pair<int, BasicTask>(i, tmp));
+            }
+            std::getline(fpRead, line);
+            if (std::regex_search(line, result, r))
+                _chkExe = result.suffix().str();
+            else
+                _chkExe = "";
+            break;
+        }
 
 	}
 	fpRead.close();
@@ -164,6 +163,20 @@ bool RunTask::run()
 	char _drive[512], _dir[512], _fname[512], _ext[512];
 	std::string grpTskFilePath="", grpTskExePath="";
 
+#ifdef  _WIN32
+    if (_access(_xmlPath.c_str(), 0) != 0)
+				{
+					std::cerr << "couldn't find xml!";
+					exit(1);
+				}
+#else defiend Linux
+    if (access(_xmlPath.c_str(), 0) != 0)
+    {
+        std::cerr << "couldn't find xml!";
+        exit(1);
+    }
+#endif
+
 	SplitPath(_xmlPath.c_str(), _drive, _dir, _fname, _ext);
 	int grpNum = GetGrpNum();
 	bTsk dealStage = GetDealStage();
@@ -182,22 +195,7 @@ bool RunTask::run()
 			if (strcmp(".bat", _ext) == 0)
 				cmdTskExe = grpTskExePath;
 			else
-			{
-#ifdef  _WIN32
-				if (_access(_xmlPath.c_str(), 0) != 0)
-				{
-					std::cerr << "couldn't find xml!";
-					exit(1);
-				}
-#else defiend Linux
-                if (access(_xmlPath.c_str(), 0) != 0)
-                {
-                    std::cerr << "couldn't find xml!";
-                    exit(1);
-                }
-#endif
 				cmdTskExe = grpTskExePath + " " + _xmlPath;
-			}
 
 			system(cmdTskExe.c_str());//build the content of tskfile
 
@@ -207,7 +205,7 @@ bool RunTask::run()
 		//if dont have TskExe,there must have a .gtsk,so we read the content of gtsk.
 		MediumTask tmp;
 		std::string line;
-
+        //read .gtsk
 		std::fstream fpRead(grpTskFilePath);
 		if (!fpRead)
 		{

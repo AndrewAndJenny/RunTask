@@ -3,20 +3,21 @@
 #define BASICINFO_HPP
 #define _CRT_SECURE_NO_WARNINGS
 #include "iostream"
-#include"map"
+#include "map"
 #include "fstream"
 #include "string"
 #include "sstream"
 #include "regex"
 #include "vector"
 #include "boost/thread.hpp"
+//ne group information
 struct BasicTask
 {
 	std::string tskFile;
 	std::string tskExe;
 	std::string knlExe;
 };
-
+//.gtsk information
 struct MediumTask
 {
 	int tskNum;
@@ -43,12 +44,12 @@ protected:
 	void SplitWholeName(const char *whole_name, char *fname, char *ext);
 
 private:
-	int _id;
-	int _state;
-	int _grpNum;
+	int _id;                                                //RunTask.ini information
+	int _state;                                             //RunTask.ini information
+	int _grpNum;                                            //GrpSum
 	bTsk _dealStage;
 	std::string _chkExe;
-	static const std::vector<std::string> s_appList;
+	static const std::vector<std::string> s_appList;        //pp List
 };
 
 class RunTask :public PrjInfo

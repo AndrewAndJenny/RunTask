@@ -61,4 +61,4 @@ set(SRCS_FILES ${SOURCES})
 
 add_executable (${PROJECT_NAME} ${SRCS_FILES})
 
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} -lboost_thread -lboost_system -lboost_filesystem)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} /lib/x86_64-linux-gnu/libpthread.so.0 /usr/lib/libboost_system.a /usr/lib/libboost_thread.a)

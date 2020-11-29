@@ -38,7 +38,8 @@ prerequisites: cmake version>=3.0
 
 ## Functions
 
--  A tool to call another programs in **RunTask.ini**
+-  A tool to call another programs,the Initialization file is **RunTask.ini**
+> *Tip:RunTask.out and RunTask.ini should put together.*
 
 ## Contact
 
