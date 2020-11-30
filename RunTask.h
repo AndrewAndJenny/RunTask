@@ -10,7 +10,7 @@
 #include "regex"
 #include "vector"
 #include "boost/thread.hpp"
-//ne group information
+// group information
 struct BasicTask
 {
 	std::string tskFile;

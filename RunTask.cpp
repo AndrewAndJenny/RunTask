@@ -228,7 +228,7 @@ bool RunTask::run()
 		if (_dealDetail[i].tskNum == 0)
 			continue;
 
-		//use thread to deal with detail tasks
+		//use threadpool to deal with detail tasks
 		int maxThreadNum = boost::thread::hardware_concurrency();
 		int totalTskNum = _dealDetail[i].tskNum;
 
@@ -240,10 +240,12 @@ bool RunTask::run()
 		QThreadPool pool;
 		std::string cmdLine;
 		pool.setMaxThreadCount(_threadNum);
+
+		std::cout << "The " << i+1 << " group task:" << std::endl;
 		for (int taskNum=0; taskNum < totalTskNum; taskNum++)
 		{
 			cmdLine = _dealDetail[i].callInfo[taskNum];
-			TaskRunable* subTask = new TaskRunable(cmdLine);
+			TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
 			pool.start(subTask);
 		}
 		pool.waitForDone(-1);

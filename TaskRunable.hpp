@@ -3,31 +3,41 @@
 #define TASKRUNABLE_HPP
 #include"QtCore/QRunnable"
 #include "QtCore/QThreadPool"
+#include "QtCore/QProcess"
+#include "QtCore/QStringList"
 #include "string"
+#include "iostream"
 #include"boost/algorithm/string.hpp"
-
 class TaskRunable :public QRunnable
 {
 public:
-	explicit TaskRunable(std::string cmd):
-		cmdLine(cmd){}
+	explicit TaskRunable(int id, std::string cmd):
+		_id(id), _cmdLine(cmd){}
 	~TaskRunable() {}
 	void run();
 
 private:
-	std::string cmdLine;
+	int _id;
+	std::string _cmdLine;
 };
 
 void TaskRunable::run()
 {
-	char* argument[50];
 	std::vector<std::string> commandSplit;
-	boost::split(commandSplit, cmdLine, boost::is_any_of(" "), boost::token_compress_on);
+	boost::split(commandSplit, _cmdLine, boost::is_any_of(" "), boost::token_compress_on);
 
-	for (int pCommandSplit = 0; pCommandSplit < commandSplit.size(); pCommandSplit++)
-		argument[pCommandSplit] = const_cast<char*>(commandSplit[pCommandSplit].c_str());
-	argument[commandSplit.size()] = NULL;
+	QString program;
+	QStringList arguments;
 
-	execv(argument[0], argument);
+	program = QString::fromStdString(commandSplit[0]);
+	for(int i=1;i< commandSplit.size();i++)
+		arguments << QString::fromStdString(commandSplit[i]);
+
+	QProcess process;
+	process.setProgram(program);
+	process.setArguments(arguments);
+	process.start();
+	process.waitForFinished(-1);
+	std::cout << "Finished " << _id << " subtask" << std::endl;
 }
 #endif
