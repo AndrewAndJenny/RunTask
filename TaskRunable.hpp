@@ -5,7 +5,7 @@
 #include "QtCore/QThreadPool"
 #include "string"
 #include"boost/algorithm/string.hpp"
-#include "process.h"
+
 class TaskRunable :public QRunnable
 {
 public:
