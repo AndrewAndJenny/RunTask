@@ -1,6 +1,7 @@
 #include "RunTask.h"
 #include "TaskRunable.hpp"
-//#include"time.h"
+#include "chrono"
+#include "ctime"
 #ifdef  _WIN32
 #include "windows.h"
 #include "io.h"
@@ -228,10 +229,8 @@ bool RunTask::run()
 		if (_dealDetail[i].tskNum == 0)
 			continue;
 
-		//use thread to deal with detail tasks
-        QThreadPool pool;
-        std::string cmdLine;
-		int maxThreadNum = pool.maxThreadCount();
+		//use threadpool to deal with detail tasks
+		int maxThreadNum = boost::thread::hardware_concurrency();
 		int totalTskNum = _dealDetail[i].tskNum;
 
 		if (_threadNum<1 || _threadNum>maxThreadNum) {
@@ -239,14 +238,26 @@ bool RunTask::run()
 			exit(1);
 		}
 
+		QThreadPool pool;
+		std::string cmdLine;
 		pool.setMaxThreadCount(_threadNum);
+		pool.setExpiryTimeout(-1);
+
+		std::cout << "The " << i+1 << " group task:" << std::endl;
+		auto start_time = std::chrono::high_resolution_clock::now();
 		for (int taskNum=0; taskNum < totalTskNum; taskNum++)
 		{
 			cmdLine = _dealDetail[i].callInfo[taskNum];
-			TaskRunable* subTask = new TaskRunable(cmdLine);
+			TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
+			subTask->setAutoDelete(true);
 			pool.start(subTask);
 		}
-		pool.waitForDone(-1);
+
+		pool.waitForDone();
+		auto end_time = std::chrono::high_resolution_clock::now();
+		auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
+
+		std::cout << "The " << i+1 << " group task. the cost of time is " <<cost_time.count()<<"s"<<std::endl;
 	}
 
 	std::string cmdChkExe = GetChkExe();

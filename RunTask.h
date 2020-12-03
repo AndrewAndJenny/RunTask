@@ -9,7 +9,8 @@
 #include "sstream"
 #include "regex"
 #include "vector"
-//ne group information
+#include "boost/thread.hpp"
+// group information
 struct BasicTask
 {
 	std::string tskFile;
