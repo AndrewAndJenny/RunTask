@@ -14,7 +14,7 @@ The code is based on the following prerequisites:
 prerequisites: cmake version>=3.0
 
 ```
-1. git clone -b feature-threadpool https://github.com/AndrewAndJenny/RunTask.git
+1. git clone https://github.com/AndrewAndJenny/RunTask.git
 2. cd RunTask
 ```
 

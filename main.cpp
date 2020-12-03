@@ -19,7 +19,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 int main(int argc,  char* argv[])
 {
 	int svrId = 0;
-	int threadNum = 8;
+	int threadNum = 4;
 	std::string xmlPath = "";
 	std::string appName = "";
 	std::string runTaskIniPath = "RunTask.ini";
@@ -57,6 +57,6 @@ int main(int argc,  char* argv[])
 	RunTask runTask(runTaskIniPath, appName, svrId, threadNum, xmlPath);
 	
 	runTask.run();
-
+	std::cin.get();
 	return 0;
 }
