@@ -5,6 +5,7 @@
 #include "QtCore/QThreadPool"
 #include "QtCore/QProcess"
 #include "QtCore/QStringList"
+#include "QtCore/QDebug"
 #include "string"
 #include "iostream"
 #include "chrono"
@@ -39,10 +40,18 @@ void TaskRunable::run()
 	QProcess process;
 	process.setProgram(program);
 	process.setArguments(arguments);
-	//process.start(program, arguments);
 	process.start();
-	//process.errorOccurred(QProcess::Crashed);
-	process.waitForFinished(-1);
+
+	if(process.waitForStarted())
+	    std::cout<<_id<<" program start"<<std::endl;
+
+	process.waitForReadyRead(-1);
+	process.waitForBytesWritten(-1);
+
+	if(process.waitForFinished(-1))
+	    std::cout<<_id<<" program finish"<<std::endl;
+
+	qDebug()<<"ID:"<<_id<<" "<<QString::fromLocal8Bit(process.readAllStandardError());
 	
     auto end_time = std::chrono::high_resolution_clock::now();
     auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
