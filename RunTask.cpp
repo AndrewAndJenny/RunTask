@@ -187,17 +187,18 @@ bool RunTask::run()
 		if (!dealStage[i].tskFile.empty())
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
-			grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
+		{
+			std::string flag = dealStage[i].tskExe.substr(0, 2);
+			if (strcmp(flag.c_str(), "..")==0)
+				grpTskExePath = dealStage[i].tskExe;
+			else
+				grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
+		}
 
 		std::string cmdTskExe;
 		if (!grpTskExePath.empty())
 		{
-			SplitPath(grpTskExePath.c_str(), _drive, _dir, _fname, _ext);
-			if (strcmp(".bat", _ext) == 0)
-				cmdTskExe = grpTskExePath;
-			else
-				cmdTskExe = grpTskExePath + " " + _xmlPath;
-
+			cmdTskExe = grpTskExePath + " " + std::string(_dir);
 			system(cmdTskExe.c_str());//build the content of tskfile
 
 			if (grpTskFilePath.empty())//just run TskExe xml, current loop is over
@@ -230,7 +231,9 @@ bool RunTask::run()
 			continue;
 
 		//use threadpool to deal with detail tasks
-		int maxThreadNum = boost::thread::hardware_concurrency();
+		QThreadPool pool;
+		std::string cmdLine;
+		int maxThreadNum = pool.maxThreadCount();
 		int totalTskNum = _dealDetail[i].tskNum;
 
 		if (_threadNum<1 || _threadNum>maxThreadNum) {
@@ -238,8 +241,6 @@ bool RunTask::run()
 			exit(1);
 		}
 
-		QThreadPool pool;
-		std::string cmdLine;
 		pool.setMaxThreadCount(_threadNum);
 		pool.setExpiryTimeout(-1);
 

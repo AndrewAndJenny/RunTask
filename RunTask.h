@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #ifndef BASICINFO_HPP
 #define BASICINFO_HPP
 #define _CRT_SECURE_NO_WARNINGS
@@ -9,8 +10,7 @@
 #include "sstream"
 #include "regex"
 #include "vector"
-#include "boost/thread.hpp"
-// group information
+//ne group information
 struct BasicTask
 {
 	std::string tskFile;
@@ -72,4 +72,3 @@ private:
 };
 
 #endif
-
