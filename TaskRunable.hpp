@@ -5,12 +5,13 @@
 #include "QtCore/QThreadPool"
 #include "QtCore/QProcess"
 #include "QtCore/QStringList"
-#include "QtCore/QDebug"
 #include "string"
 #include "iostream"
 #include "chrono"
 #include "ctime"
 #include"boost/algorithm/string.hpp"
+#include "stdlib.h"
+#include "qdebug.h"
 class TaskRunable :public QRunnable
 {
 public:
@@ -32,6 +33,8 @@ void TaskRunable::run()
 	QString program;
 	QStringList arguments;
 
+	//system(_cmdLine.c_str());
+
 	program = QString::fromStdString(commandSplit[0]);
 	for(int i=1;i< commandSplit.size();i++)
 		arguments << QString::fromStdString(commandSplit[i]);
@@ -41,18 +44,19 @@ void TaskRunable::run()
 	process.setProgram(program);
 	process.setArguments(arguments);
 	process.start();
-
-	if(process.waitForStarted())
-	    std::cout<<_id<<" program start"<<std::endl;
-
+	//process.startDetached(program,arguments);
+	if(process.waitForStarted()){
+	    std::cout<< _id << "program start"<<std::endl;
+	}
 	process.waitForReadyRead(-1);
 	process.waitForBytesWritten(-1);
 
-	if(process.waitForFinished(-1))
-	    std::cout<<_id<<" program finish"<<std::endl;
+	if(process.waitForFinished(-1)){
+        std::cout<< _id << "program finish"<<std::endl;
+	};
+    qDebug()<<"ID:"<<_id<<" "<<QString::fromLocal8Bit(process.readAllStandardError());
 
-	qDebug()<<"ID:"<<_id<<" "<<QString::fromLocal8Bit(process.readAllStandardError());
-	
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
 	std::cout << "Finished " << _id << " subtask. the cost of time is " << cost_time.count()<<"s"<<std::endl;
