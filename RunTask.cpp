@@ -3,13 +3,10 @@
 #include "chrono"
 #include "ctime"
 #ifdef  _WIN32
-#include "windows.h"
 #include "io.h"
 #else defined linux
 #include "stdlib.h"
 #include"unistd.h"
-#include <sys/wait.h>
-#include <errno.h>
 #endif
 
 
