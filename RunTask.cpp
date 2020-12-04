@@ -161,20 +161,6 @@ bool RunTask::run()
 	char _drive[512], _dir[512], _fname[512], _ext[512];
 	std::string grpTskFilePath = "", grpTskExePath = "";
 
-#ifdef  _WIN32
-	if (_access(_xmlPath.c_str(), 0) != 0)
-	{
-		std::cout << "couldn't find xml!";
-		exit(1);
-	}
-#else defiend Linux
-	if (access(_xmlPath.c_str(), 0) != 0)
-	{
-		std::cout << "couldn't find xml!";
-		exit(1);
-	}
-#endif
-
 	SplitPath(_xmlPath.c_str(), _drive, _dir, _fname, _ext);
 	int grpNum = GetGrpNum();
 	bTsk dealStage = GetDealStage();
