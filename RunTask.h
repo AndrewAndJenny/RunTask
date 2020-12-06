@@ -59,7 +59,7 @@ public:
 		PrjInfo(taskIniPath, appName), _svrId(svrId), _threadNum(threadNum), _xmlPath(xmlPath) {}
 	~RunTask() { _dealDetail.clear(); };
 
-	bool run();
+	bool run(std::string runTaskIniPath);
 
 protected:
 

@@ -123,7 +123,7 @@ void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, c
 		SplitWholeName(path, fname, ext);
 		dir[0] = '\0';
 	}
-	char tmp[256];
+	char tmp[500];
 	strcpy(tmp, dir);
 	sprintf(dir, "%s/", tmp);
 
