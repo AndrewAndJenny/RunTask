@@ -9,9 +9,6 @@
 #include"unistd.h"
 #endif
 
-
-const std::vector<std::string> PrjInfo::s_appList = { "FILTER","REGIST", "CLASSIFY","BDSEG","MESHRECON","POISSONRECON","TEXTURING","StockerLoDs","PlaneSeg","LODTEXTURE","VisCheck" };
-
 int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 {
 	std::vector<std::string>::iterator iter = std::find(input.begin(), input.end(), content);
@@ -30,12 +27,6 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 	std::smatch result;
 	std::regex r("=\\s*");
 
-	int pos = FindPosVector(s_appList, appName);
-	if (pos == -1)
-	{
-		std::cerr << "No such processing stage!";
-		exit(1);
-	}
 	//read RunTask.ini
 	std::fstream fpRead(taskIniPath);
 	if (!fpRead)
@@ -56,11 +47,10 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 
 	std::string t_appName = "[" + appName + "]";
 	//matching app
-	while (!fpRead.eof())
+    std::getline(fpRead, line);
+	while (!line.empty())
 	{
 		BasicTask tmp;
-
-		std::getline(fpRead, line);
 
 		if (strcmp(line.c_str(), t_appName.c_str()) == 0) {
 			std::getline(fpRead, line);
@@ -93,7 +83,7 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 				_chkExe = "";
 			break;
 		}
-
+        std::getline(fpRead, line);
 	}
 	fpRead.close();
 }
@@ -181,9 +171,8 @@ bool RunTask::run()
 		std::string cmdTskExe;
 		if (!grpTskExePath.empty())
 		{
-			cmdTskExe = grpTskExePath + " " + std::string(_dir);
-			system(cmdTskExe.c_str());//build the content of tskfile
-
+			cmdTskExe = grpTskExePath + " " + _xmlPath;
+            system(cmdTskExe.c_str());
 			if (grpTskFilePath.empty())//just run TskExe xml, current loop is over
 				continue;
 		}
@@ -194,7 +183,7 @@ bool RunTask::run()
 		std::fstream fpRead(grpTskFilePath);
 		if (!fpRead)
 		{
-			std::cerr << "Open .gtsk  is defeated!";
+			std::cerr << "Open "<<grpTskFilePath<<" is defeated!";
 			exit(1);
 		}
 

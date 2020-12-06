@@ -49,7 +49,6 @@ private:
 	int _grpNum;                                            //GrpSum
 	bTsk _dealStage;
 	std::string _chkExe;
-	static const std::vector<std::string> s_appList;        //pp List
 };
 
 class RunTask :public PrjInfo
