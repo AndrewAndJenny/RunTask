@@ -146,7 +146,7 @@ void PrjInfo::SplitWholeName(const char *whole_name, char *fname, char *ext)
 	}
 }
 
-bool RunTask::run()
+bool RunTask::run(std::string runTaskIniPath)
 {
 	char _drive[512], _dir[512], _fname[512], _ext[512];
 	std::string grpTskFilePath = "", grpTskExePath = "";
@@ -161,11 +161,10 @@ bool RunTask::run()
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
 		{
-			std::string flag = dealStage[i].tskExe.substr(0, 2);
-			if (strcmp(flag.c_str(), "..")==0)
-				grpTskExePath = dealStage[i].tskExe;
-			else
-				grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
+		    char iniAbsPath[500];
+			char* ptrPath = realpath(runTaskIniPath.c_str(),iniAbsPath);
+            SplitPath(iniAbsPath, _drive, _dir, _fname, _ext);
+		    grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
 		}
 
 		std::string cmdTskExe;
@@ -235,8 +234,10 @@ bool RunTask::run()
 
 	std::string cmdChkExe = GetChkExe();
 
-	if (!cmdChkExe.empty())
-		system(cmdChkExe.c_str());
+	if (!cmdChkExe.empty()){
+        cmdChkExe = cmdChkExe+" "+_xmlPath;
+        system(cmdChkExe.c_str());
+    }
 
 	return true;
 }
