@@ -1,5 +1,5 @@
 #include "RunTask.h"
-
+#include "boost/filesystem.hpp"
 static void Usage(const char* pszErrorMsg = NULL)
 {
 	fprintf(stderr, "Usage:\n");
@@ -33,11 +33,11 @@ int main(int argc,  char* argv[])
 		else if (strcmp(argv[i], "-i") == 0)
 		{
 			i++; if (i >= argc) continue;
-			xmlPath = std::string(argv[i]);
+			xmlPath = argv[i];
 		}
 		else if (strcmp(argv[i], "-l") == 0) {
 			i++; if (i >= argc) continue;
-			appName = std::string(argv[i]);
+			appName = argv[i];
 		}
 		else if (strcmp(argv[i], "-svrid") == 0) {
 			i++; if (i >= argc) continue;
@@ -53,7 +53,10 @@ int main(int argc,  char* argv[])
 		}
 	}
 
-	
+    boost::filesystem::path exeRelPath(argv[0]);
+    boost::filesystem::path exeAbsPath = boost::filesystem::system_complete(exeRelPath);
+    runTaskIniPath = exeAbsPath.string()+".ini";
+    std::cout<<runTaskIniPath<<std::endl;
 	RunTask runTask(runTaskIniPath, appName, svrId, threadNum, xmlPath);
 	
 	runTask.run(runTaskIniPath);
