@@ -55,4 +55,4 @@ set(SRCS_FILES ${SOURCES})
 
 add_executable (${PROJECT_NAME} ${SRCS_FILES})
 target_link_libraries( ${PROJECT_NAME} Qt5::Core)
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} -lboost_filesystem)

@@ -1,6 +1,7 @@
 #include "RunTask.h"
 #include "TaskRunable.hpp"
 #include "chrono"
+#include "boost/filesystem.hpp"
 #include "ctime"
 #ifdef  _WIN32
 #include "io.h"
@@ -161,9 +162,10 @@ bool RunTask::run(std::string runTaskIniPath)
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
 		{
-		    char iniAbsPath[512],_dir_[512];
-			char* ptrPath = realpath(runTaskIniPath.c_str(),iniAbsPath);
-            SplitPath(iniAbsPath, _drive, _dir_, _fname, _ext);
+		    char _dir_[512];
+		    boost::filesystem::path iniRelPath(runTaskIniPath);
+            boost::filesystem::path iniAbsPath = boost::filesystem::system_complete(iniRelPath);
+            SplitPath(iniAbsPath.c_str(), _drive, _dir_, _fname, _ext);
 		    grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
 		}
 
