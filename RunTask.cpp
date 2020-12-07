@@ -123,7 +123,7 @@ void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, c
 		SplitWholeName(path, fname, ext);
 		dir[0] = '\0';
 	}
-	char tmp[500];
+	char tmp[512];
 	strcpy(tmp, dir);
 	sprintf(dir, "%s/", tmp);
 
@@ -161,10 +161,10 @@ bool RunTask::run(std::string runTaskIniPath)
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
 		{
-		    char iniAbsPath[500];
+		    char iniAbsPath[512],_dir_[512];
 			char* ptrPath = realpath(runTaskIniPath.c_str(),iniAbsPath);
-            SplitPath(iniAbsPath, _drive, _dir, _fname, _ext);
-		    grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
+            SplitPath(iniAbsPath, _drive, _dir_, _fname, _ext);
+		    grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
 		}
 
 		std::string cmdTskExe;
