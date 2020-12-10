@@ -50,7 +50,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 find_package(Qt5 COMPONENTS Core REQUIRED)
 include_directories(${Qt5Core_INCLUDE_DIRS})
 
-file(GLOB SOURCES "*.cpp" "*.h")
+file(GLOB SOURCES "*.cpp" "*.h" "*.hpp")
 set(SRCS_FILES ${SOURCES})
 
 add_executable (${PROJECT_NAME} ${SRCS_FILES})

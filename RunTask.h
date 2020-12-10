@@ -13,9 +13,11 @@
 //ne group information
 struct BasicTask
 {
+    BasicTask() : coreNum(-1) {}
 	std::string tskFile;
 	std::string tskExe;
 	std::string knlExe;
+	int coreNum;
 };
 //.gtsk information
 struct MediumTask

@@ -10,6 +10,8 @@
 #include"unistd.h"
 #endif
 
+#include "LPFileOperator.hpp"
+
 int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 {
 	std::vector<std::string>::iterator iter = std::find(input.begin(), input.end(), content);
@@ -24,6 +26,7 @@ int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 
 PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 {
+#if 0
 	std::string line;
 	std::smatch result;
 	std::regex r("=\\s*");
@@ -87,6 +90,51 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
         std::getline(fpRead, line);
 	}
 	fpRead.close();
+#else
+	int max_len = 1024;
+	char strLoad[max_len];
+	int grp_temp(0);
+	GetPrivateProfileString(appName.c_str(), "GrpSum", "0", strLoad, max_len, taskIniPath.c_str());
+	sscanf(strLoad, "%d", &grp_temp);
+
+    char prefix[32];
+    char keyName[max_len];
+
+    int task_idx(0);
+    for (int i = 0; i < grp_temp; ++i) {
+        BasicTask task_item;
+
+        {
+            sprintf(prefix, "Grp%d_", i);
+
+            sprintf(keyName, "%sTskFile", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.tskFile = std::string(strLoad);
+
+            sprintf(keyName, "%sTskExe", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.tskExe = std::string(strLoad);
+
+            sprintf(keyName, "%sKnlExe", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.knlExe = std::string(strLoad);
+
+            sprintf(keyName, "%sCore", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "-1", strLoad, max_len, taskIniPath.c_str());
+            sscanf(strLoad, "%d", &task_item.coreNum);
+        }
+
+        if (task_item.tskExe.empty() && task_item.tskFile.empty())
+            continue;
+
+        _dealStage.insert(std::make_pair(task_idx, task_item));
+        task_idx++;
+    }
+    _grpNum = task_idx;
+
+    GetPrivateProfileString(appName.c_str(), "ChkExe", "", strLoad, max_len, taskIniPath.c_str());
+    _chkExe = std::string(strLoad);
+#endif
 }
 
 void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, char *ext)
@@ -158,6 +206,9 @@ bool RunTask::run(std::string runTaskIniPath)
 
 	for (int i = 0; i < grpNum; i++)
 	{
+	    if (dealStage.find(i) == dealStage.end())
+            continue;
+
 		if (!dealStage[i].tskFile.empty())
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
@@ -209,12 +260,15 @@ bool RunTask::run(std::string runTaskIniPath)
 		int maxThreadNum = pool.maxThreadCount();
 		int totalTskNum = _dealDetail[i].tskNum;
 
-		if (_threadNum<1 || _threadNum>maxThreadNum) {
-			std::cerr << "ERROR! The number of thread must meet the requirements\n";
-			exit(1);
+		int thread_used = dealStage[i].coreNum > 0 ? dealStage[i].coreNum : _threadNum;
+		if (thread_used < 1 || thread_used > maxThreadNum) {
+            thread_used = QThread::idealThreadCount();
+			//std::cerr << "ERROR! The number of thread must meet the requirements\n";
+			//exit(1);
 		}
+		std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
 
-		pool.setMaxThreadCount(_threadNum);
+		pool.setMaxThreadCount(thread_used);
 		pool.setExpiryTimeout(-1);
 
 		std::cout << "The " << i+1 << " group task:" << std::endl;
