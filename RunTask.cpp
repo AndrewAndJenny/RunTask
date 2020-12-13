@@ -266,26 +266,32 @@ bool RunTask::run(std::string runTaskIniPath)
 			//std::cerr << "ERROR! The number of thread must meet the requirements\n";
 			//exit(1);
 		}
-		std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
+		if(totalTskNum==1)
+		    system(_dealDetail[i].callInfo[0].c_str());
+		else
+        {
+            std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
 
-		pool.setMaxThreadCount(thread_used);
-		pool.setExpiryTimeout(-1);
+            pool.setMaxThreadCount(thread_used);
+            pool.setExpiryTimeout(-1);
 
-		std::cout << "The " << i+1 << " group task:" << std::endl;
-		auto start_time = std::chrono::high_resolution_clock::now();
-		for (int taskNum=0; taskNum < totalTskNum; taskNum++)
-		{
-			cmdLine = _dealDetail[i].callInfo[taskNum];
-			TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
-			subTask->setAutoDelete(true);
-			pool.start(subTask);
-		}
+            std::cout << "The " << i+1 << " group task:" << std::endl;
+            auto start_time = std::chrono::high_resolution_clock::now();
+            for (int taskNum=0; taskNum < totalTskNum; taskNum++)
+            {
+                cmdLine = _dealDetail[i].callInfo[taskNum];
+                TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
+                subTask->setAutoDelete(true);
+                pool.start(subTask);
+            }
 
-		pool.waitForDone();
-		auto end_time = std::chrono::high_resolution_clock::now();
-		auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
+            pool.waitForDone();
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
 
-		std::cout << "The " << i+1 << " group task. the cost of time is " <<cost_time.count()<<"s"<<std::endl;
+            std::cout << "The " << i+1 << " group task. the cost of time is " <<cost_time.count()<<"s"<<std::endl;
+        }
+
 	}
 
 	std::string cmdChkExe = GetChkExe();
