@@ -33,11 +33,11 @@ int main(int argc,  char* argv[])
 		else if (strcmp(argv[i], "-i") == 0)
 		{
 			i++; if (i >= argc) continue;
-			xmlPath = std::string(argv[i]);
+			xmlPath = argv[i];
 		}
 		else if (strcmp(argv[i], "-l") == 0) {
 			i++; if (i >= argc) continue;
-			appName = std::string(argv[i]);
+			appName = argv[i];
 		}
 		else if (strcmp(argv[i], "-svrid") == 0) {
 			i++; if (i >= argc) continue;
