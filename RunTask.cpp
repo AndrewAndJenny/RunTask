@@ -1,18 +1,16 @@
 #include "RunTask.h"
-//#include"time.h"
+#include "TaskRunable.hpp"
+#include "chrono"
+#include "boost/filesystem.hpp"
+#include "ctime"
 #ifdef  _WIN32
-#include "windows.h"
 #include "io.h"
 #else defined linux
 #include "stdlib.h"
 #include"unistd.h"
-#include <sys/wait.h>
-#include <errno.h>
-#include"boost/algorithm/string.hpp"
 #endif
 
-
-const std::vector<std::string> PrjInfo::s_appList = { "FILTER","REGIST", "CLASSIFY","BDSEG","MESHRECON","POISSONRECON","TEXTURING","StockerLoDs","PlaneSeg","LODTEXTURE","VisCheck" };
+#include "LPFileOperator.hpp"
 
 int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 {
@@ -28,17 +26,13 @@ int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 
 PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 {
+#if 0
 	std::string line;
 	std::smatch result;
 	std::regex r("=\\s*");
 
-	int pos = FindPosVector(s_appList, appName);
-	if (pos == -1)
-	{
-		std::cerr << "No such processing stage!";
-		exit(1);
-	}
-    //read RunTask.ini
+	//read RunTask.ini
+
 	std::fstream fpRead(taskIniPath);
 	if (!fpRead)
 	{
@@ -57,47 +51,91 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 		_state = std::atoi(result.suffix().str().c_str());
 
 	std::string t_appName = "[" + appName + "]";
-    //matching app
-	while (!fpRead.eof())
+	//matching app
+    std::getline(fpRead, line);
+	while (!line.empty())
 	{
 		BasicTask tmp;
 
-		std::getline(fpRead, line);
-
 		if (strcmp(line.c_str(), t_appName.c_str()) == 0) {
-            std::getline(fpRead, line);
-            if (std::regex_search(line, result, r))
-                _grpNum = std::atoi(result.suffix().str().c_str());
-            for (int i = 0; i < _grpNum; i++) {
-                std::getline(fpRead, line);
-                if (std::regex_search(line, result, r))
-                    tmp.tskFile = result.suffix().str();
-                else
-                    tmp.tskFile = "";
+			std::getline(fpRead, line);
+			if (std::regex_search(line, result, r))
+				_grpNum = std::atoi(result.suffix().str().c_str());
+			for (int i = 0; i < _grpNum; i++) {
+				std::getline(fpRead, line);
+				if (std::regex_search(line, result, r))
+					tmp.tskFile = result.suffix().str();
+				else
+					tmp.tskFile = "";
 
-                std::getline(fpRead, line);
-                if (std::regex_search(line, result, r))
-                    tmp.tskExe = result.suffix().str();
-                else
-                    tmp.tskExe = "";
+				std::getline(fpRead, line);
+				if (std::regex_search(line, result, r))
+					tmp.tskExe = result.suffix().str();
+				else
+					tmp.tskExe = "";
 
-                std::getline(fpRead, line);
-                if (std::regex_search(line, result, r))
-                    tmp.knlExe = result.suffix().str();
-                else
-                    tmp.knlExe = "";
-                _dealStage.insert(std::pair<int, BasicTask>(i, tmp));
-            }
-            std::getline(fpRead, line);
-            if (std::regex_search(line, result, r))
-                _chkExe = result.suffix().str();
-            else
-                _chkExe = "";
-            break;
-        }
-
+				std::getline(fpRead, line);
+				if (std::regex_search(line, result, r))
+					tmp.knlExe = result.suffix().str();
+				else
+					tmp.knlExe = "";
+				_dealStage.insert(std::pair<int, BasicTask>(i, tmp));
+			}
+			std::getline(fpRead, line);
+			if (std::regex_search(line, result, r))
+				_chkExe = result.suffix().str();
+			else
+				_chkExe = "";
+			break;
+		}
+        std::getline(fpRead, line);
 	}
 	fpRead.close();
+#else
+	int max_len = 1024;
+	char strLoad[max_len];
+	int grp_temp(0);
+	GetPrivateProfileString(appName.c_str(), "GrpSum", "0", strLoad, max_len, taskIniPath.c_str());
+	sscanf(strLoad, "%d", &grp_temp);
+
+    char prefix[32];
+    char keyName[max_len];
+
+    int task_idx(0);
+    for (int i = 0; i < grp_temp; ++i) {
+        BasicTask task_item;
+
+        {
+            sprintf(prefix, "Grp%d_", i);
+
+            sprintf(keyName, "%sTskFile", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.tskFile = std::string(strLoad);
+
+            sprintf(keyName, "%sTskExe", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.tskExe = std::string(strLoad);
+
+            sprintf(keyName, "%sKnlExe", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+            task_item.knlExe = std::string(strLoad);
+
+            sprintf(keyName, "%sCore", prefix);
+            GetPrivateProfileString(appName.c_str(), keyName, "-1", strLoad, max_len, taskIniPath.c_str());
+            sscanf(strLoad, "%d", &task_item.coreNum);
+        }
+
+        if (task_item.tskExe.empty() && task_item.tskFile.empty())
+            continue;
+
+        _dealStage.insert(std::make_pair(task_idx, task_item));
+        task_idx++;
+    }
+    _grpNum = task_idx;
+
+    GetPrivateProfileString(appName.c_str(), "ChkExe", "", strLoad, max_len, taskIniPath.c_str());
+    _chkExe = std::string(strLoad);
+#endif
 }
 
 void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, char *ext)
@@ -135,7 +173,8 @@ void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, c
 		SplitWholeName(path, fname, ext);
 		dir[0] = '\0';
 	}
-	char tmp[256];
+
+	char tmp[512];
 	strcpy(tmp, dir);
 	sprintf(dir, "%s/", tmp);
 
@@ -158,58 +197,49 @@ void PrjInfo::SplitWholeName(const char *whole_name, char *fname, char *ext)
 	}
 }
 
-bool RunTask::run()
+
+bool RunTask::run(std::string runTaskIniPath)
 {
 	char _drive[512], _dir[512], _fname[512], _ext[512];
-	std::string grpTskFilePath="", grpTskExePath="";
+	std::string grpTskFilePath = "", grpTskExePath = "";
 
-#ifdef  _WIN32
-    if (_access(_xmlPath.c_str(), 0) != 0)
-				{
-					std::cerr << "couldn't find xml!";
-					exit(1);
-				}
-#else defiend Linux
-    if (access(_xmlPath.c_str(), 0) != 0)
-    {
-        std::cerr << "couldn't find xml!";
-        exit(1);
-    }
-#endif
 
 	SplitPath(_xmlPath.c_str(), _drive, _dir, _fname, _ext);
 	int grpNum = GetGrpNum();
 	bTsk dealStage = GetDealStage();
 
-	for (int i=0;i<grpNum;i++)
+	for (int i = 0; i < grpNum; i++)
 	{
-		if(!dealStage[i].tskFile.empty())
+	    if (dealStage.find(i) == dealStage.end())
+            continue;
+
+		if (!dealStage[i].tskFile.empty())
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
-			grpTskExePath = std::string(_dir).append(dealStage[i].tskExe);
+		{
+		    char _dir_[512];
+		    boost::filesystem::path iniRelPath(runTaskIniPath);
+            boost::filesystem::path iniAbsPath = boost::filesystem::system_complete(iniRelPath);
+            SplitPath(iniAbsPath.c_str(), _drive, _dir_, _fname, _ext);
+		    grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
+		}
 
 		std::string cmdTskExe;
 		if (!grpTskExePath.empty())
 		{
-			SplitPath(grpTskExePath.c_str(), _drive, _dir, _fname, _ext);
-			if (strcmp(".bat", _ext) == 0)
-				cmdTskExe = grpTskExePath;
-			else
-				cmdTskExe = grpTskExePath + " " + _xmlPath;
-
-			system(cmdTskExe.c_str());//build the content of tskfile
-
-			if(grpTskFilePath.empty())//just run TskExe xml, current loop is over
+			cmdTskExe = grpTskExePath + " " + _xmlPath;
+            system(cmdTskExe.c_str());
+			if (grpTskFilePath.empty())//just run TskExe xml, current loop is over
 				continue;
 		}
 		//if dont have TskExe,there must have a .gtsk,so we read the content of gtsk.
 		MediumTask tmp;
 		std::string line;
-        //read .gtsk
+		//read .gtsk
 		std::fstream fpRead(grpTskFilePath);
 		if (!fpRead)
 		{
-			std::cerr << "Open .gtsk  is defeated!";
+			std::cerr << "Open "<<grpTskFilePath<<" is defeated!";
 			exit(1);
 		}
 
@@ -224,96 +254,56 @@ bool RunTask::run()
 		_dealDetail.insert(std::pair<int, MediumTask>(i, tmp));//Store every loop information
 
 		fpRead.close();
-		
+
 		if (_dealDetail[i].tskNum == 0)
 			continue;
 
-		//use thread to deal with detail tasks
-		int maxThreadNum = boost::thread::hardware_concurrency();
+		//use threadpool to deal with detail tasks
+		QThreadPool pool;
+		std::string cmdLine;
+		int maxThreadNum = pool.maxThreadCount();
 		int totalTskNum = _dealDetail[i].tskNum;
 
-		if (_threadNum<1 || _threadNum>maxThreadNum) {
-			std::cerr << "ERROR! The number of thread must meet the requirements\n";
-			exit(1);
+		int thread_used = dealStage[i].coreNum > 0 ? dealStage[i].coreNum : _threadNum;
+		if (thread_used < 1 || thread_used > maxThreadNum) {
+            thread_used = QThread::idealThreadCount();
+			//std::cerr << "ERROR! The number of thread must meet the requirements\n";
+			//exit(1);
 		}
+		if(totalTskNum==1)
+		    system(_dealDetail[i].callInfo[0].c_str());
+		else
+        {
+            std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
 
-		//clock_t start_time = clock();
+            pool.setMaxThreadCount(thread_used);
+            pool.setExpiryTimeout(-1);
 
-		for (int j = 0; j < totalTskNum; j+= _threadNum)
-		{
-			int remainThreadNum = totalTskNum - j >= _threadNum ? _threadNum : totalTskNum - j;
-#ifdef  _WIN32
-			for (int k = 0; k < remainThreadNum; k++)
-			{
-				LPSTR cmdLine = (LPSTR)_dealDetail[i].callInfo[j + k].c_str();
-				STARTUPINFOA startUpInfo = { 0 };
-				PROCESS_INFORMATION processInformation = { 0 };
-				startUpInfo.cb = sizeof(STARTUPINFOA);
-				//CREATE_NO_WINDOW or CREATE_NEW_CONSOLE
-				 bool flag = CreateProcess(NULL,cmdLine,NULL,NULL,FALSE, CREATE_NO_WINDOW,NULL,NULL,&startUpInfo, &processInformation);
-				 
-				 if (flag)
-					 std::cout << "Finish the number of " << j + k << " task\n";
-				 else
-					 std::cout << "Unfinish the number of " << j + k << " task\n";
-			}
-#else defined linux
-            std::vector<pid_t> pidContainer;
-			std::vector<bool> pidBoolContainer;
-			bool oneThreadRun = true;
-            for (int k = 0; k < remainThreadNum; k++)
+            std::cout << "The " << i+1 << " group task:" << std::endl;
+            auto start_time = std::chrono::high_resolution_clock::now();
+            for (int taskNum=0; taskNum < totalTskNum; taskNum++)
             {
-                pid_t pid = fork();
-
-                if(pid==0){
-                    char* argument[50];
-                    std::string cmdLine =_dealDetail[i].callInfo[j + k];
-                    std::vector<std::string> commandSplit;
-                    boost::split(commandSplit,cmdLine,boost::is_any_of(" "), boost::token_compress_on);
-
-                    for(int pCommandSplit=0;pCommandSplit<commandSplit.size();pCommandSplit++)
-                        argument[pCommandSplit] = const_cast<char*>(commandSplit[pCommandSplit].c_str());
-                    argument[commandSplit.size()] = NULL;
-
-                    execv(argument[0],argument);
-                    //if execv correctly run,it will not go to here, if not, this will display the error of this process
-                    printf("command ls is not found, error code: %d(%s)", errno, strerror(errno));
-                }
-                else if(pid<0) {
-                    std::cerr<<"couldn't create new process!";
-                    exit(1);
-                }
-                else {//Parent thread
-                    pidContainer.push_back(pid);
-                    pidBoolContainer.push_back(true);
-                    waitpid(-1,NULL, WNOHANG);
-                }
+                cmdLine = _dealDetail[i].callInfo[taskNum];
+                TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
+                subTask->setAutoDelete(true);
+                pool.start(subTask);
             }
 
-            do {//Rotation
-                for (int k = 0; k < pidContainer.size(); k++)
-                {
-                    int pidCurrent = waitpid(pidContainer[k],NULL,WNOHANG);
-                    if(pidCurrent == pidContainer[k])
-                        pidBoolContainer[k] = false;
-                }
-                oneThreadRun = false;
-                for (int k = 0; k < pidContainer.size(); k++) //Rotation
-                {
-                    if(pidBoolContainer[k])
-                        oneThreadRun = true;
-                }
-            }while(oneThreadRun);
-#endif
-		}
-		//clock_t end_time = clock();
-		//std::cout << "The run time is: " << (double)(end_time - start_time)<< "ms" << std::endl;
+            pool.waitForDone();
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
+
+            std::cout << "The " << i+1 << " group task. the cost of time is " <<cost_time.count()<<"s"<<std::endl;
+        }
+
 	}
 
 	std::string cmdChkExe = GetChkExe();
 
-	if (!cmdChkExe.empty())
-		system(cmdChkExe.c_str());
+	if (!cmdChkExe.empty()){
+        cmdChkExe = cmdChkExe+" "+_xmlPath;
+        system(cmdChkExe.c_str());
+    }
 
 	return true;
 }

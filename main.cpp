@@ -1,4 +1,6 @@
 #include "RunTask.h"
+#include "boost/filesystem.hpp"
+#include "LPFileOperator.hpp"
 
 static void Usage(const char* pszErrorMsg = NULL)
 {
@@ -23,6 +25,15 @@ int main(int argc,  char* argv[])
 	std::string xmlPath = "";
 	std::string appName = "";
 	std::string runTaskIniPath = "RunTask.ini";
+
+    boost::filesystem::path exeRelPath(argv[0]);
+    boost::filesystem::path exeAbsPath = boost::filesystem::system_complete(exeRelPath);
+    runTaskIniPath = exeAbsPath.string()+".ini";
+    std::cout<<runTaskIniPath<<std::endl;
+
+    char strLoad[1024];
+    GetPrivateProfileString("FlowInfo", "CORENUM", "-1", strLoad, 1024, runTaskIniPath.c_str());
+    sscanf(strLoad, "%d", &threadNum);
 	
 	for (int i = 1; i < argc; i++)
 	{
@@ -53,9 +64,8 @@ int main(int argc,  char* argv[])
 		}
 	}
 
-	
 	RunTask runTask(runTaskIniPath, appName, svrId, threadNum, xmlPath);
 	
-	runTask.run();
+	runTask.run(runTaskIniPath);
 	return 0;
 }

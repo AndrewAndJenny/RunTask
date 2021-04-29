@@ -6,8 +6,8 @@ A tool to call another programs
 
 The code is based on the following prerequisites:
 
-- boost(Windows)<kbd>finished</kbd>
-- boost(Linux) <kbd>finished</kbd>
+- boost
+- Qt5
 
 ## Compilation
 
@@ -19,16 +19,6 @@ prerequisites: cmake version>=3.0
 ```
 
 **in the cmake-bash**
-
-- Windows
-
-```
-1. mkdir build && cd build
-2. cmake .. -A x64
-3. open the vs solution, and install
-```
-
-- Linux
 
 ```
 1. mkdir build && cd build
