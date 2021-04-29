@@ -32,7 +32,6 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 	std::regex r("=\\s*");
 
 	//read RunTask.ini
-
 	std::fstream fpRead(taskIniPath);
 	if (!fpRead)
 	{
@@ -92,7 +91,7 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 	}
 	fpRead.close();
 #else
-	int max_len = 1024;
+	const int max_len = 1024;
 	char strLoad[max_len];
 	int grp_temp(0);
 	GetPrivateProfileString(appName.c_str(), "GrpSum", "0", strLoad, max_len, taskIniPath.c_str());
@@ -173,7 +172,6 @@ void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, c
 		SplitWholeName(path, fname, ext);
 		dir[0] = '\0';
 	}
-
 	char tmp[512];
 	strcpy(tmp, dir);
 	sprintf(dir, "%s/", tmp);
@@ -197,12 +195,10 @@ void PrjInfo::SplitWholeName(const char *whole_name, char *fname, char *ext)
 	}
 }
 
-
 bool RunTask::run(std::string runTaskIniPath)
 {
 	char _drive[512], _dir[512], _fname[512], _ext[512];
 	std::string grpTskFilePath = "", grpTskExePath = "";
-
 
 	SplitPath(_xmlPath.c_str(), _drive, _dir, _fname, _ext);
 	int grpNum = GetGrpNum();
@@ -220,7 +216,7 @@ bool RunTask::run(std::string runTaskIniPath)
 		    char _dir_[512];
 		    boost::filesystem::path iniRelPath(runTaskIniPath);
             boost::filesystem::path iniAbsPath = boost::filesystem::system_complete(iniRelPath);
-            SplitPath(iniAbsPath.c_str(), _drive, _dir_, _fname, _ext);
+            SplitPath(iniAbsPath.string().c_str(), _drive, _dir_, _fname, _ext);
 		    grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
 		}
 

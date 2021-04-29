@@ -1,4 +1,3 @@
-#pragma once
 #ifndef TASKRUNABLE_HPP
 #define TASKRUNABLE_HPP
 #include"QtCore/QRunnable"

@@ -8,7 +8,6 @@
 #include "sstream"
 #include "regex"
 #include "vector"
-
 //ne group information
 struct BasicTask
 {
@@ -36,7 +35,6 @@ public:
 
 	int GetGrpNum() { return _grpNum; }
 	bTsk GetDealStage() { return _dealStage; }
-	
 	std::string GetChkExe() { return _chkExe; }
 
 	static int FindPosVector(std::vector <std::string> input, std::string content);
@@ -51,14 +49,12 @@ private:
 	int _grpNum;                                            //GrpSum
 	bTsk _dealStage;
 	std::string _chkExe;
-
 };
 
 class RunTask :public PrjInfo
 {
 public:
 	RunTask() {};
-
 	explicit RunTask(std::string taskIniPath, std::string appName, int svrId, int threadNum, std::string xmlPath) :
 		PrjInfo(taskIniPath, appName), _svrId(svrId), _threadNum(threadNum), _xmlPath(xmlPath) {}
 	~RunTask() { _dealDetail.clear(); };

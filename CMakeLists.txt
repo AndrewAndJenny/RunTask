@@ -3,22 +3,7 @@ project(RunTask CXX)
 
 #set
 set(BOOST_INCLUDE_DIRS $ENV{BOOST_LIBRARY_DIR} cache path "BOOST_INCLUDE_DIRS")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-	set(PLATFORM "Linux")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-	if(CMAKE_CL_64)  
-		set(PLATFORM "x64")
-	else(CMAKE_CL_64)  
-		set(PLATFORM "WIN32")
-	endif(CMAKE_CL_64)
-else()
-	set(PLATFORM "others")
-endif(CMAKE_SYSTEM_NAME MATCHES "Linux")
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${PLATFORM})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${PLATFORM})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${PLATFORM})
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # set MD to MT
 if(OPTION_BUILD_MT)
@@ -35,6 +20,7 @@ foreach(CompilerFlags ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlags} "${${CompilerFlags}}")
 endforeach()
 endif()
+
 #boost
 find_package(Boost REQUIRED)
 
@@ -49,9 +35,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 find_package(Qt5 COMPONENTS Core REQUIRED)
 include_directories(${Qt5Core_INCLUDE_DIRS})
 
-file(GLOB SOURCES "*.cpp" "*.h" "*.hpp")
-set(SRCS_FILES ${SOURCES})
+file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
-add_executable (${PROJECT_NAME} ${SRCS_FILES})
+add_executable (${PROJECT_NAME} ${SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries( ${PROJECT_NAME} Qt5::Core)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} -lboost_filesystem -lboost_system)
