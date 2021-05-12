@@ -94,7 +94,7 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 	const int max_len = 1024;
 	char strLoad[max_len];
 	int grp_temp(0);
-	GetPrivateProfileString(appName.c_str(), "GrpSum", "0", strLoad, max_len, taskIniPath.c_str());
+	LPFile::GetPrivateProfileString(appName.c_str(), "GrpSum", "0", strLoad, max_len, taskIniPath.c_str());
 	sscanf(strLoad, "%d", &grp_temp);
 
     char prefix[32];
@@ -108,19 +108,19 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
             sprintf(prefix, "Grp%d_", i);
 
             sprintf(keyName, "%sTskFile", prefix);
-            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+			LPFile::GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
             task_item.tskFile = std::string(strLoad);
 
             sprintf(keyName, "%sTskExe", prefix);
-            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+			LPFile::GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
             task_item.tskExe = std::string(strLoad);
 
             sprintf(keyName, "%sKnlExe", prefix);
-            GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
+			LPFile::GetPrivateProfileString(appName.c_str(), keyName, "", strLoad, max_len, taskIniPath.c_str());
             task_item.knlExe = std::string(strLoad);
 
             sprintf(keyName, "%sCore", prefix);
-            GetPrivateProfileString(appName.c_str(), keyName, "-1", strLoad, max_len, taskIniPath.c_str());
+			LPFile::GetPrivateProfileString(appName.c_str(), keyName, "-1", strLoad, max_len, taskIniPath.c_str());
             sscanf(strLoad, "%d", &task_item.coreNum);
         }
 
@@ -132,9 +132,45 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
     }
     _grpNum = task_idx;
 
-    GetPrivateProfileString(appName.c_str(), "ChkExe", "", strLoad, max_len, taskIniPath.c_str());
+	LPFile::GetPrivateProfileString(appName.c_str(), "ChkExe", "", strLoad, max_len, taskIniPath.c_str());
     _chkExe = std::string(strLoad);
 #endif
+}
+
+void  PrjInfo::SplitPath(std::string path, char *drive, char *dir, char *fname, char *ext)
+{
+	std::string str;
+
+	char pre_char = path[0];
+	str.push_back(path[0]);
+
+	int len = path.size();
+
+	for (int i = 1; i < len; ++i)
+	{
+
+		if (path[i] == '/')
+		{
+			if (pre_char == '/' || pre_char == '\\')
+				continue;
+			else
+				str.push_back(path[i]);
+		}
+		else if (path[i] == '\\')
+		{
+			if (pre_char == '/' || pre_char == '\\')
+				continue;
+			else
+				str.push_back('/');
+		}
+		else
+		{
+			str.push_back(path[i]);
+		}
+
+		pre_char = str.back();
+	}
+	SplitPath(str.c_str(), drive, dir, fname, ext);
 }
 
 void PrjInfo::SplitPath(const char *path, char *drive, char *dir, char *fname, char *ext)
@@ -200,31 +236,31 @@ bool RunTask::run(std::string runTaskIniPath)
 	char _drive[512], _dir[512], _fname[512], _ext[512];
 	std::string grpTskFilePath = "", grpTskExePath = "";
 
-	SplitPath(_xmlPath.c_str(), _drive, _dir, _fname, _ext);
+	SplitPath(_xmlPath, _drive, _dir, _fname, _ext);
 	int grpNum = GetGrpNum();
 	bTsk dealStage = GetDealStage();
 
 	for (int i = 0; i < grpNum; i++)
 	{
-	    if (dealStage.find(i) == dealStage.end())
-            continue;
+		if (dealStage.find(i) == dealStage.end())
+			continue;
 
 		if (!dealStage[i].tskFile.empty())
 			grpTskFilePath = std::string(_dir).append(dealStage[i].tskFile);
 		if (!dealStage[i].tskExe.empty())
 		{
-		    char _dir_[512];
-		    boost::filesystem::path iniRelPath(runTaskIniPath);
-            boost::filesystem::path iniAbsPath = boost::filesystem::system_complete(iniRelPath);
-            SplitPath(iniAbsPath.string().c_str(), _drive, _dir_, _fname, _ext);
-		    grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
+			char _dir_[512];
+			boost::filesystem::path iniRelPath(runTaskIniPath);
+			boost::filesystem::path iniAbsPath = boost::filesystem::system_complete(iniRelPath);
+			SplitPath(iniAbsPath.string(), _drive, _dir_, _fname, _ext);
+			grpTskExePath = std::string(_dir_).append(dealStage[i].tskExe);
 		}
 
 		std::string cmdTskExe;
 		if (!grpTskExePath.empty())
 		{
 			cmdTskExe = grpTskExePath + " " + _xmlPath;
-            system(cmdTskExe.c_str());
+			system(cmdTskExe.c_str());
 			if (grpTskFilePath.empty())//just run TskExe xml, current loop is over
 				continue;
 		}
@@ -235,7 +271,7 @@ bool RunTask::run(std::string runTaskIniPath)
 		std::fstream fpRead(grpTskFilePath);
 		if (!fpRead)
 		{
-			std::cerr << "Open "<<grpTskFilePath<<" is defeated!";
+			std::cerr << "Open " << grpTskFilePath << " is defeated!";
 			exit(1);
 		}
 
@@ -261,45 +297,43 @@ bool RunTask::run(std::string runTaskIniPath)
 		int totalTskNum = _dealDetail[i].tskNum;
 
 		int thread_used = dealStage[i].coreNum > 0 ? dealStage[i].coreNum : _threadNum;
-		if (thread_used < 1 || thread_used > maxThreadNum) {
-            thread_used = QThread::idealThreadCount();
-			//std::cerr << "ERROR! The number of thread must meet the requirements\n";
-			//exit(1);
-		}
-		if(totalTskNum==1)
-		    system(_dealDetail[i].callInfo[0].c_str());
+
+		if (thread_used < 1 || thread_used > maxThreadNum) 
+			thread_used = QThread::idealThreadCount();
+		if (totalTskNum == 1)
+			system(_dealDetail[i].callInfo[0].c_str());
 		else
-        {
-            std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
+		{
+			std::cout << thread_used << " cores used to execute " << totalTskNum << " sub tasks in group " << i << std::endl;
 
-            pool.setMaxThreadCount(thread_used);
-            pool.setExpiryTimeout(-1);
+			pool.setMaxThreadCount(thread_used);
+			pool.setExpiryTimeout(-1);
 
-            std::cout << "The " << i+1 << " group task:" << std::endl;
-            auto start_time = std::chrono::high_resolution_clock::now();
-            for (int taskNum=0; taskNum < totalTskNum; taskNum++)
-            {
-                cmdLine = _dealDetail[i].callInfo[taskNum];
-                TaskRunable* subTask = new TaskRunable(taskNum,cmdLine);
-                subTask->setAutoDelete(true);
-                pool.start(subTask);
-            }
+			std::cout << "The " << i + 1 << " group task:" << std::endl;
+			auto start_time = std::chrono::high_resolution_clock::now();
+			for (int taskNum = 0; taskNum < totalTskNum; taskNum++)
+			{
+				cmdLine = _dealDetail[i].callInfo[taskNum];
+				TaskRunable* subTask = new TaskRunable(taskNum, cmdLine);
+				subTask->setAutoDelete(true);
+				pool.start(subTask);
+			}
 
-            pool.waitForDone();
-            auto end_time = std::chrono::high_resolution_clock::now();
-            auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time);
+			pool.waitForDone();
+			auto end_time = std::chrono::high_resolution_clock::now();
+			auto cost_time = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
-            std::cout << "The " << i+1 << " group task. the cost of time is " <<cost_time.count()<<"s"<<std::endl;
-        }
+			std::cout << "The " << i + 1 << " group task. the cost of time is " << cost_time.count() << "s" << std::endl;
+		}
 
 	}
 
 	std::string cmdChkExe = GetChkExe();
 
-	if (!cmdChkExe.empty()){
-        cmdChkExe = cmdChkExe+" "+_xmlPath;
-        system(cmdChkExe.c_str());
-    }
+	if (!cmdChkExe.empty()) {
+		cmdChkExe = cmdChkExe + " " + _xmlPath;
+		system(cmdChkExe.c_str());
+	}
 
 	return true;
 }

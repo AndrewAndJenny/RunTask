@@ -26,6 +26,8 @@ private:
 
 void TaskRunable::run()
 {
+	auto start_time = std::chrono::high_resolution_clock::now();
+
 	std::vector<std::string> commandSplit;
 	boost::split(commandSplit, _cmdLine, boost::is_any_of(" "), boost::token_compress_on);
 
@@ -37,13 +39,13 @@ void TaskRunable::run()
 	program = QString::fromStdString(commandSplit[0]);
 	for(int i=1;i< commandSplit.size();i++)
 		arguments << QString::fromStdString(commandSplit[i]);
-    auto start_time = std::chrono::high_resolution_clock::now();
+  
 
 	QProcess process;
 	process.setProgram(program);
 	process.setArguments(arguments);
 	process.start();
-	//process.startDetached(program,arguments);
+
 	if(process.waitForStarted()){
 	    std::cout<< _id << "program start"<<std::endl;
 	}

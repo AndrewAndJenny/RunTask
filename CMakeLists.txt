@@ -2,7 +2,10 @@ cmake_minimum_required (VERSION 3.0)
 project(RunTask CXX)
 
 #set
-set(BOOST_INCLUDE_DIRS $ENV{BOOST_LIBRARY_DIR} cache path "BOOST_INCLUDE_DIRS")
+if(MSVC)
+set(BOOST_INCLUDEDIR $ENV{Boost_INCLUDE_DIRS} CACHE PATH "BOOST_INCLUDEDIR")
+set(BOOST_LIBRARYDIR $ENV{BOOST_LIBRARY_DIR} CACHE PATH "BOOST_LIBRARYDIR")
+endif()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # set MD to MT
@@ -22,22 +25,24 @@ endforeach()
 endif()
 
 #boost
-find_package(Boost REQUIRED)
-
-if(BOOST_NOT_FOUND)
-	message(STATUS "couldn't find Boost")
-endif(BOOST_NOT_FOUND)
+if(MSVC)
+  set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
+  set(Boost_USE_DEBUG_LIBS         ON) # ignore debug libs and
+  set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
+  set(Boost_USE_MULTITHREADED      ON)
+  set(Boost_USE_STATIC_RUNTIME    OFF)
+endif()
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
 
 #qt5
 find_package(Qt5 COMPONENTS Core REQUIRED)
 include_directories(${Qt5Core_INCLUDE_DIRS})
 
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
-
-add_executable (${PROJECT_NAME} ${SOURCES})
+file(GLOB HEADS ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/include/*.hpp)
+set(SRCS ${SOURCES} ${HEADS})
+add_executable (${PROJECT_NAME} ${SRCS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries( ${PROJECT_NAME} Qt5::Core)
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} -lboost_filesystem -lboost_system)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core ${Boost_LIBRARIES})

@@ -28,11 +28,16 @@ int main(int argc,  char* argv[])
 
     boost::filesystem::path exeRelPath(argv[0]);
     boost::filesystem::path exeAbsPath = boost::filesystem::system_complete(exeRelPath);
-    runTaskIniPath = exeAbsPath.string()+".ini";
+#ifdef _WIN32
+	size_t dotPos = exeAbsPath.string().find_last_of(".");
+	runTaskIniPath = exeAbsPath.string().substr(0, dotPos) + ".ini";
+#else
+	runTaskIniPath = exeAbsPath.string() + ".ini";
+#endif
     std::cout<<runTaskIniPath<<std::endl;
 
     char strLoad[1024];
-    GetPrivateProfileString("FlowInfo", "CORENUM", "-1", strLoad, 1024, runTaskIniPath.c_str());
+	LPFile::GetPrivateProfileString("FlowInfo", "CORENUM", "-1", strLoad, 1024, runTaskIniPath.c_str());
     sscanf(strLoad, "%d", &threadNum);
 	
 	for (int i = 1; i < argc; i++)

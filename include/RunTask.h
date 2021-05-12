@@ -38,6 +38,7 @@ public:
 	std::string GetChkExe() { return _chkExe; }
 
 	static int FindPosVector(std::vector <std::string> input, std::string content);
+	void SplitPath(std::string path, char *drive, char *dir, char *fname, char *ext);
 	void SplitPath(const char *path, char *drive, char *dir, char *fname, char *ext);
 
 protected:
