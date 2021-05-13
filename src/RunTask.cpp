@@ -26,71 +26,6 @@ int PrjInfo::FindPosVector(std::vector <std::string> input, std::string content)
 
 PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 {
-#if 0
-	std::string line;
-	std::smatch result;
-	std::regex r("=\\s*");
-
-	//read RunTask.ini
-	std::fstream fpRead(taskIniPath);
-	if (!fpRead)
-	{
-		std::cerr << "Initialization is defeated!";
-		exit(1);
-	}
-
-	std::getline(fpRead, line);
-	//_id
-	std::getline(fpRead, line);
-	if (std::regex_search(line, result, r))
-		_id = std::atoi(result.suffix().str().c_str());
-	//_state
-	std::getline(fpRead, line);
-	if (std::regex_search(line, result, r))
-		_state = std::atoi(result.suffix().str().c_str());
-
-	std::string t_appName = "[" + appName + "]";
-	//matching app
-    std::getline(fpRead, line);
-	while (!line.empty())
-	{
-		BasicTask tmp;
-
-		if (strcmp(line.c_str(), t_appName.c_str()) == 0) {
-			std::getline(fpRead, line);
-			if (std::regex_search(line, result, r))
-				_grpNum = std::atoi(result.suffix().str().c_str());
-			for (int i = 0; i < _grpNum; i++) {
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.tskFile = result.suffix().str();
-				else
-					tmp.tskFile = "";
-
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.tskExe = result.suffix().str();
-				else
-					tmp.tskExe = "";
-
-				std::getline(fpRead, line);
-				if (std::regex_search(line, result, r))
-					tmp.knlExe = result.suffix().str();
-				else
-					tmp.knlExe = "";
-				_dealStage.insert(std::pair<int, BasicTask>(i, tmp));
-			}
-			std::getline(fpRead, line);
-			if (std::regex_search(line, result, r))
-				_chkExe = result.suffix().str();
-			else
-				_chkExe = "";
-			break;
-		}
-        std::getline(fpRead, line);
-	}
-	fpRead.close();
-#else
 	const int max_len = 1024;
 	char strLoad[max_len];
 	int grp_temp(0);
@@ -134,7 +69,6 @@ PrjInfo::PrjInfo(std::string taskIniPath, std::string appName)
 
 	LPFile::GetPrivateProfileString(appName.c_str(), "ChkExe", "", strLoad, max_len, taskIniPath.c_str());
     _chkExe = std::string(strLoad);
-#endif
 }
 
 void  PrjInfo::SplitPath(std::string path, char *drive, char *dir, char *fname, char *ext)

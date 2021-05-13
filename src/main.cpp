@@ -28,13 +28,13 @@ int main(int argc,  char* argv[])
 
     boost::filesystem::path exeRelPath(argv[0]);
     boost::filesystem::path exeAbsPath = boost::filesystem::system_complete(exeRelPath);
+
 #ifdef _WIN32
 	size_t dotPos = exeAbsPath.string().find_last_of(".");
 	runTaskIniPath = exeAbsPath.string().substr(0, dotPos) + ".ini";
 #else
 	runTaskIniPath = exeAbsPath.string() + ".ini";
 #endif
-    std::cout<<runTaskIniPath<<std::endl;
 
     char strLoad[1024];
 	LPFile::GetPrivateProfileString("FlowInfo", "CORENUM", "-1", strLoad, 1024, runTaskIniPath.c_str());
