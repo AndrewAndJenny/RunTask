@@ -8,7 +8,7 @@
 #include "sstream"
 #include "regex"
 #include "vector"
-//ne group information
+
 struct BasicTask
 {
     BasicTask() : coreNum(-1) {}

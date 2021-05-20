@@ -1,5 +1,4 @@
 #include "RunTask.h"
-#include "boost/filesystem.hpp"
 #include "LPFileOperator.hpp"
 
 static void Usage(const char* pszErrorMsg = NULL)
@@ -18,6 +17,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 	exit(1);
 }
 
+
 int main(int argc,  char* argv[])
 {
 	int svrId = 0;
@@ -26,14 +26,15 @@ int main(int argc,  char* argv[])
 	std::string appName = "";
 	std::string runTaskIniPath = "RunTask.ini";
 
-    boost::filesystem::path exeRelPath(argv[0]);
-    boost::filesystem::path exeAbsPath = boost::filesystem::system_complete(exeRelPath);
+	char buffer[512];
+	LPFile::GetCurrentPath(buffer, 512);
 
 #ifdef _WIN32
-	size_t dotPos = exeAbsPath.string().find_last_of(".");
-	runTaskIniPath = exeAbsPath.string().substr(0, dotPos) + ".ini";
+	size_t dotPos = std::string(buffer).find_last_of(".");
+	runTaskIniPath = std::string(buffer).substr(0, dotPos) + ".ini";
 #else
-	runTaskIniPath = exeAbsPath.string() + ".ini";
+	sprintf(buffer, "%s.ini", buffer);
+	runTaskIniPath = std::string(buffer);
 #endif
 
     char strLoad[1024];

@@ -24,18 +24,6 @@ foreach(CompilerFlags ${CompilerFlags})
 endforeach()
 endif()
 
-#boost
-if(MSVC)
-  set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
-  set(Boost_USE_DEBUG_LIBS         ON) # ignore debug libs and
-  set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
-  set(Boost_USE_MULTITHREADED      ON)
-  set(Boost_USE_STATIC_RUNTIME    OFF)
-endif()
-find_package(Boost COMPONENTS system filesystem REQUIRED)
-
-include_directories(${Boost_INCLUDE_DIRS})
-
 #qt5
 find_package(Qt5 COMPONENTS Core REQUIRED)
 include_directories(${Qt5Core_INCLUDE_DIRS})
@@ -45,4 +33,4 @@ file(GLOB HEADS ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/include/*.hp
 set(SRCS ${SOURCES} ${HEADS})
 add_executable (${PROJECT_NAME} ${SRCS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core )

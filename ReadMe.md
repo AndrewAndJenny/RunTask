@@ -6,7 +6,6 @@ A tool to call another programs
 
 The code is based on the following prerequisites:
 
-- boost
 - Qt5
 
 ## Compilation
